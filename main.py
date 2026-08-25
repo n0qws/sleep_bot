@@ -1,9 +1,12 @@
 import os
 import sqlite3
 import logging
+import asyncio
 from datetime import datetime, timedelta
 from aiogram import Bot, Dispatcher, types
-from aiogram.utils import executor
+from aiogram.filters import Command
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from aiogram.fsm.storage.memory import MemoryStorage
 
 # ========== ТОКЕН ==========
 BOT_TOKEN = os.environ.get("8537321553:AAGF6sywXfiSs7bJEO9dPnw-GSS-cUFZvds") or "8537321553:AAGF6sywXfiSs7bJEO9dPnw-GSS-cUFZvds"
@@ -87,46 +90,47 @@ def get_stats(user_id):
 # ========== БОТ ==========
 logging.basicConfig(level=logging.INFO)
 bot = Bot(token=BOT_TOKEN)
-dp = Dispatcher(bot)
+storage = MemoryStorage()
+dp = Dispatcher(storage=storage)
 
 # ========== КЛАВИАТУРЫ ==========
 
-main_keyboard = types.ReplyKeyboardMarkup(
+main_keyboard = ReplyKeyboardMarkup(
     keyboard=[
-        [types.KeyboardButton(text="🕐 Часы сна")],
-        [types.KeyboardButton(text="⭐ Качество сна")],
-        [types.KeyboardButton(text="😊 Настроение")],
-        [types.KeyboardButton(text="🛏️ Время отхода")],
-        [types.KeyboardButton(text="📊 Статистика")]
+        [KeyboardButton(text="🕐 Часы сна")],
+        [KeyboardButton(text="⭐ Качество сна")],
+        [KeyboardButton(text="😊 Настроение")],
+        [KeyboardButton(text="🛏️ Время отхода")],
+        [KeyboardButton(text="📊 Статистика")]
     ],
     resize_keyboard=True
 )
 
-hours_keyboard = types.ReplyKeyboardMarkup(
+hours_keyboard = ReplyKeyboardMarkup(
     keyboard=[
-        [types.KeyboardButton(text="6"), types.KeyboardButton(text="7"), types.KeyboardButton(text="8")],
-        [types.KeyboardButton(text="9"), types.KeyboardButton(text="10")],
-        [types.KeyboardButton(text="❌ Отмена")]
+        [KeyboardButton(text="6"), KeyboardButton(text="7"), KeyboardButton(text="8")],
+        [KeyboardButton(text="9"), KeyboardButton(text="10")],
+        [KeyboardButton(text="❌ Отмена")]
     ],
     resize_keyboard=True
 )
 
-numbers_keyboard = types.ReplyKeyboardMarkup(
+numbers_keyboard = ReplyKeyboardMarkup(
     keyboard=[
-        [types.KeyboardButton(text="1"), types.KeyboardButton(text="2"), types.KeyboardButton(text="3"), 
-         types.KeyboardButton(text="4"), types.KeyboardButton(text="5")],
-        [types.KeyboardButton(text="6"), types.KeyboardButton(text="7"), types.KeyboardButton(text="8"), 
-         types.KeyboardButton(text="9"), types.KeyboardButton(text="10")],
-        [types.KeyboardButton(text="❌ Отмена")]
+        [KeyboardButton(text="1"), KeyboardButton(text="2"), KeyboardButton(text="3"), 
+         KeyboardButton(text="4"), KeyboardButton(text="5")],
+        [KeyboardButton(text="6"), KeyboardButton(text="7"), KeyboardButton(text="8"), 
+         KeyboardButton(text="9"), KeyboardButton(text="10")],
+        [KeyboardButton(text="❌ Отмена")]
     ],
     resize_keyboard=True
 )
 
-time_keyboard = types.ReplyKeyboardMarkup(
+time_keyboard = ReplyKeyboardMarkup(
     keyboard=[
-        [types.KeyboardButton(text="23:00"), types.KeyboardButton(text="23:30")],
-        [types.KeyboardButton(text="00:00"), types.KeyboardButton(text="00:30")],
-        [types.KeyboardButton(text="❌ Отмена")]
+        [KeyboardButton(text="23:00"), KeyboardButton(text="23:30")],
+        [KeyboardButton(text="00:00"), KeyboardButton(text="00:30")],
+        [KeyboardButton(text="❌ Отмена")]
     ],
     resize_keyboard=True
 )
@@ -136,7 +140,7 @@ user_state = {}
 
 # ========== ОБРАБОТЧИКИ ==========
 
-@dp.message_handler(commands=['start'])
+@dp.message(Command("start"))
 async def start(message: types.Message):
     init_db()
     await message.answer(
@@ -147,7 +151,7 @@ async def start(message: types.Message):
         reply_markup=main_keyboard
     )
 
-@dp.message_handler(lambda msg: msg.text == "🕐 Часы сна")
+@dp.message(lambda msg: msg.text == "🕐 Часы сна")
 async def set_hours(message: types.Message):
     user_state[message.from_user.id] = "hours"
     await message.answer(
@@ -155,7 +159,7 @@ async def set_hours(message: types.Message):
         reply_markup=hours_keyboard
     )
 
-@dp.message_handler(lambda msg: msg.text == "⭐ Качество сна")
+@dp.message(lambda msg: msg.text == "⭐ Качество сна")
 async def set_quality(message: types.Message):
     user_state[message.from_user.id] = "quality"
     await message.answer(
@@ -163,7 +167,7 @@ async def set_quality(message: types.Message):
         reply_markup=numbers_keyboard
     )
 
-@dp.message_handler(lambda msg: msg.text == "😊 Настроение")
+@dp.message(lambda msg: msg.text == "😊 Настроение")
 async def set_mood(message: types.Message):
     user_state[message.from_user.id] = "mood"
     await message.answer(
@@ -171,7 +175,7 @@ async def set_mood(message: types.Message):
         reply_markup=numbers_keyboard
     )
 
-@dp.message_handler(lambda msg: msg.text == "🛏️ Время отхода")
+@dp.message(lambda msg: msg.text == "🛏️ Время отхода")
 async def set_bed_time(message: types.Message):
     user_state[message.from_user.id] = "bed_time"
     await message.answer(
@@ -179,7 +183,7 @@ async def set_bed_time(message: types.Message):
         reply_markup=time_keyboard
     )
 
-@dp.message_handler(lambda msg: msg.text == "📊 Статистика")
+@dp.message(lambda msg: msg.text == "📊 Статистика")
 async def show_stats(message: types.Message):
     data = get_stats(message.from_user.id)
     if not data:
@@ -196,7 +200,7 @@ async def show_stats(message: types.Message):
     
     await message.answer(text, parse_mode="Markdown", reply_markup=main_keyboard)
 
-@dp.message_handler(lambda msg: msg.text == "❌ Отмена")
+@dp.message(lambda msg: msg.text == "❌ Отмена")
 async def cancel(message: types.Message):
     if message.from_user.id in user_state:
         del user_state[message.from_user.id]
@@ -204,7 +208,7 @@ async def cancel(message: types.Message):
 
 # ========== ОБРАБОТКА ВВОДА ==========
 
-@dp.message_handler()
+@dp.message()
 async def handle_input(message: types.Message):
     user_id = message.from_user.id
     
@@ -251,7 +255,10 @@ async def handle_input(message: types.Message):
 
 # ========== ЗАПУСК ==========
 
-if __name__ == "__main__":
+async def main():
     init_db()
     print("✅ Бот запущен!")
-    executor.start_polling(dp, skip_updates=True)
+    await dp.start_polling(bot)
+
+if __name__ == "__main__":
+    asyncio.run(main())
