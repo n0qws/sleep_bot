@@ -12,14 +12,6 @@ from aiogram.fsm.context import FSMContext
 # ========== ТОКЕН ==========
 BOT_TOKEN = os.environ.get("8537321553:AAGF6sywXfiSs7bJEO9dPnw-GSS-cUFZvds") or "8537321553:AAGF6sywXfiSs7bJEO9dPnw-GSS-cUFZvds"
 
-# ========== КОНФИГ ==========
-RECOMMENDED_HOURS = {
-    "14-17": 8.5,
-    "18-25": 7.5,
-    "26-64": 7,
-    "65+": 7.5
-}
-
 # ========== БАЗА ДАННЫХ ==========
 DB_NAME = "sleep_data.db"
 
@@ -278,9 +270,9 @@ async def calculate_time(message: types.Message, state: FSMContext):
         
         await state.clear()
         await message.answer(
-            f"⏰ *Если ты просыпаешься в {wake_time}:*\n\n"
-            f"🛌 Лучше лечь в *{bed_time}* — это 7.5 часов сна (5 циклов по 90 минут).\n\n"
-            f"💡 Попробуй встать между циклами — будешь чувствовать себя бодрее!",
+            f"⏰ *Чтобы проснуться в {wake_time}:*\n\n"
+            f"🛌 Ложись в *{bed_time}* — это 7.5 часов сна (5 циклов по 90 минут).\n\n"
+            f"💡 Вставай между циклами — будешь бодрее!",
             parse_mode="Markdown"
         )
     except ValueError:
