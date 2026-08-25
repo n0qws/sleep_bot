@@ -11,7 +11,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 
 # ========== ТОКЕН ==========
-BOT_TOKEN = os.environ.get("BOT_TOKEN") or "ВАШ_ТОКЕН"
+BOT_TOKEN = os.environ.get("8537321553:AAGF6sywXfiSs7bJEO9dPnw-GSS-cUFZvds") or "8537321553:AAGF6sywXfiSs7bJEO9dPnw-GSS-cUFZvds"
 
 # ========== БАЗА ДАННЫХ ==========
 DB_NAME = "sleep_data.db"
